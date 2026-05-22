@@ -1,0 +1,16 @@
+module.exports = [
+  { id: 'gluten',       label: 'Gluten',        icon: '🌾' },
+  { id: 'crustaceos',   label: 'Crustáceos',    icon: '🦐' },
+  { id: 'huevos',       label: 'Huevos',         icon: '🥚' },
+  { id: 'pescado',      label: 'Pescado',        icon: '🐟' },
+  { id: 'cacahuetes',   label: 'Cacahuetes',     icon: '🥜' },
+  { id: 'soja',         label: 'Soja',           icon: '🫘' },
+  { id: 'lacteos',      label: 'Lácteos',        icon: '🥛' },
+  { id: 'frutos_secos', label: 'Frutos secos',   icon: '🌰' },
+  { id: 'apio',         label: 'Apio',           icon: '🌿' },
+  { id: 'mostaza',      label: 'Mostaza',        icon: '🌻' },
+  { id: 'sesamo',       label: 'Sésamo',         icon: '🌱' },
+  { id: 'sulfitos',     label: 'Sulfitos',       icon: '🍷' },
+  { id: 'altramuces',   label: 'Altramuces',     icon: '🫛' },
+  { id: 'moluscos',     label: 'Moluscos',       icon: '🐚' },
+];

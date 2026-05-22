@@ -126,7 +126,7 @@
       <!-- Edit menu details -->
       <div class="panel">
         <h2 class="panel-title">Datos de la carta</h2>
-        <form method="POST" action="/admin/menus/<%= menu.id %>/edit">
+        <form method="POST" action="/admin/menus/<%= menu.id %>/edit" enctype="multipart/form-data">
           <div class="form-grid">
             <div class="form-group">
               <label>Nombre <span style="color:#cf2e2e">*</span></label>
@@ -136,13 +136,24 @@
               <label>Restaurante</label>
               <input type="text" name="restaurant_name" value="<%= menu.restaurant_name || '' %>">
             </div>
-            <div class="form-group">
+            <div class="form-group form-group--full">
               <label>Descripción</label>
               <input type="text" name="description" value="<%= menu.description || '' %>">
             </div>
-            <div class="form-group">
-              <label>URL del logo <span class="label-opt">(externo)</span></label>
-              <input type="url" name="logo_url" value="<%= menu.logo_url || '' %>" placeholder="https://...">
+            <div class="form-group form-group--full">
+              <label>Logo del restaurante</label>
+              <% if (menu.logo_url) { %>
+                <div class="logo-preview-wrap">
+                  <img src="<%= menu.logo_url %>" alt="Logo actual" class="logo-preview">
+                  <small>Logo actual. Sube uno nuevo para reemplazarlo.</small>
+                  <label style="display:inline-flex;align-items:center;gap:6px;margin-top:4px;cursor:pointer;font-size:12px;color:#cf2e2e;font-weight:600">
+                    <input type="checkbox" name="clear_logo" value="1" style="width:auto;min-height:auto">
+                    Eliminar logo actual
+                  </label>
+                </div>
+              <% } %>
+              <input type="file" name="logo" accept="image/jpeg,image/png,image/gif,image/webp" style="padding:6px 0">
+              <small>Sube desde tu PC (JPG, PNG, GIF, WEBP — máx. 5 MB)</small>
             </div>
           </div>
           <div style="margin-top:16px">
@@ -252,12 +263,21 @@
                               <label>Descripción</label>
                               <input type="text" name="description" value="<%= dish.description || '' %>">
                             </div>
-                            <div class="form-group">
+                            <div class="form-group form-group--full">
                               <label>Alérgenos</label>
-                              <input type="text" name="allergens" value="<%= dish.allergens || '' %>"
-                                     placeholder="Gluten, Lácteos…">
+                              <div class="allergen-grid">
+                                <% const selAlg = (dish.allergens || '').split(',').map(s => s.trim()).filter(Boolean); %>
+                                <% allergensList.forEach(a => {
+                                     const checked = selAlg.some(s => s === a.id || s.toLowerCase() === a.label.toLowerCase());
+                                %>
+                                  <label class="allergen-check">
+                                    <input type="checkbox" name="allergens" value="<%= a.id %>" <%= checked ? 'checked' : '' %>>
+                                    <span class="allergen-chip"><%= a.icon %> <%= a.label %></span>
+                                  </label>
+                                <% }); %>
+                              </div>
                             </div>
-                            <div class="form-group">
+                            <div class="form-group form-group--full">
                               <label>Imagen <span class="label-opt">(nueva foto)</span></label>
                               <input type="file" name="image" accept="image/*">
                               <% if (dish.image_url) { %>
@@ -301,11 +321,18 @@
                         <label>Descripción</label>
                         <input type="text" name="description" placeholder="Ingredientes o descripción breve">
                       </div>
-                      <div class="form-group">
+                      <div class="form-group form-group--full">
                         <label>Alérgenos</label>
-                        <input type="text" name="allergens" placeholder="Gluten, Lácteos…">
+                        <div class="allergen-grid">
+                          <% allergensList.forEach(a => { %>
+                            <label class="allergen-check">
+                              <input type="checkbox" name="allergens" value="<%= a.id %>">
+                              <span class="allergen-chip"><%= a.icon %> <%= a.label %></span>
+                            </label>
+                          <% }) %>
+                        </div>
                       </div>
-                      <div class="form-group">
+                      <div class="form-group form-group--full">
                         <label>Imagen</label>
                         <input type="file" name="image" accept="image/*">
                       </div>

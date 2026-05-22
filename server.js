@@ -1,9 +1,10 @@
 require('dotenv').config();
-const express = require('express');
-const path    = require('path');
-const fs      = require('fs');
-const multer  = require('multer');
-const db      = require('./database');
+const express      = require('express');
+const path         = require('path');
+const fs           = require('fs');
+const multer       = require('multer');
+const db           = require('./database');
+const allergensList = require('./allergens');
 
 const app            = express();
 const PORT           = process.env.PORT || 3000;
@@ -111,7 +112,7 @@ app.get('/admin', requireAdmin, (req, res) => {
     ORDER BY m.created_at DESC
   `).all();
 
-  res.render('admin', { page: 'dashboard', menus, flash: getFlash(req) });
+  res.render('admin', { page: 'dashboard', menus, flash: getFlash(req), allergensList: [] });
 });
 
 // ════════════════════════════════════════════════════════════════════════════════
@@ -138,15 +139,27 @@ app.get('/admin/menus/:id', requireAdmin, (req, res) => {
 
   const dishesByCategory = loadDishesByCategory(categories);
 
-  res.render('admin', { page: 'menu', menu, categories, dishesByCategory, flash: getFlash(req) });
+  res.render('admin', { page: 'menu', menu, categories, dishesByCategory, flash: getFlash(req), allergensList });
 });
 
-app.post('/admin/menus/:id/edit', requireAdmin, (req, res) => {
-  const { name, restaurant_name, description, logo_url } = req.body;
+app.post('/admin/menus/:id/edit', requireAdmin, upload.single('logo'), (req, res) => {
+  const menu = db.prepare(`SELECT * FROM menus WHERE id=?`).get(req.params.id);
+  if (!menu) return res.redirect('/admin');
+
+  const { name, restaurant_name, description } = req.body;
   if (!name) return redirectFlash(res, `/admin/menus/${req.params.id}`, 'error', 'El nombre es obligatorio.');
 
+  let logo_url = menu.logo_url;
+  if (req.file) {
+    deleteFile(menu.logo_url);
+    logo_url = `/uploads/${req.file.filename}`;
+  } else if (req.body.clear_logo) {
+    deleteFile(menu.logo_url);
+    logo_url = null;
+  }
+
   db.prepare(`UPDATE menus SET name=?, restaurant_name=?, description=?, logo_url=? WHERE id=?`)
-    .run(name.trim(), trim(restaurant_name), trim(description), trim(logo_url), req.params.id);
+    .run(name.trim(), trim(restaurant_name), trim(description), logo_url, req.params.id);
 
   redirectFlash(res, `/admin/menus/${req.params.id}`, 'success', 'Carta actualizada');
 });
@@ -202,14 +215,15 @@ app.post('/admin/categories/:catId/dishes', requireAdmin, upload.single('image')
   const cat = db.prepare(`SELECT * FROM categories WHERE id=?`).get(req.params.catId);
   if (!cat) return res.redirect('/admin');
 
-  const { name, description, price, allergens } = req.body;
+  const { name, description, price } = req.body;
   if (!name) return redirectFlash(res, `/admin/menus/${cat.menu_id}`, 'error', 'Nombre del plato obligatorio.');
 
-  const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
+  const imageUrl  = req.file ? `/uploads/${req.file.filename}` : null;
+  const allergens = normalizeAllergens(req.body.allergens);
 
   db.prepare(
     `INSERT INTO dishes (category_id, name, description, price, image_url, allergens) VALUES (?, ?, ?, ?, ?, ?)`
-  ).run(cat.id, name.trim(), trim(description), numOrNull(price), imageUrl, trim(allergens));
+  ).run(cat.id, name.trim(), trim(description), numOrNull(price), imageUrl, allergens);
 
   redirectFlash(res, `/admin/menus/${cat.menu_id}`, 'success', `Plato "${name}" añadido`);
 });
@@ -220,7 +234,7 @@ app.post('/admin/dishes/:id/edit', requireAdmin, upload.single('image'), (req, r
   ).get(req.params.id);
   if (!dish) return res.redirect('/admin');
 
-  const { name, description, price, allergens } = req.body;
+  const { name, description, price } = req.body;
   if (!name) return redirectFlash(res, `/admin/menus/${dish.menu_id}`, 'error', 'Nombre del plato obligatorio.');
 
   let imageUrl = dish.image_url;
@@ -229,9 +243,11 @@ app.post('/admin/dishes/:id/edit', requireAdmin, upload.single('image'), (req, r
     imageUrl = `/uploads/${req.file.filename}`;
   }
 
+  const allergens = normalizeAllergens(req.body.allergens);
+
   db.prepare(
     `UPDATE dishes SET name=?, description=?, price=?, image_url=?, allergens=? WHERE id=?`
-  ).run(name.trim(), trim(description), numOrNull(price), imageUrl, trim(allergens), req.params.id);
+  ).run(name.trim(), trim(description), numOrNull(price), imageUrl, allergens, req.params.id);
 
   redirectFlash(res, `/admin/menus/${dish.menu_id}`, 'success', 'Plato actualizado');
 });
@@ -285,7 +301,7 @@ app.get('/menu/:id', (req, res) => {
 
   const dishesByCategory = loadDishesByCategory(categories);
 
-  res.render('menu', { menu, categories, dishesByCategory });
+  res.render('menu', { menu, categories, dishesByCategory, allergensList });
 });
 
 // ─── Root redirect ────────────────────────────────────────────────────────────
@@ -305,6 +321,10 @@ app.listen(PORT, () => console.log(`Carta Interactiva → http://localhost:${POR
 
 function trim(val) { return (val || '').trim() || null; }
 function numOrNull(val) { const n = parseFloat(val); return isNaN(n) ? null : n; }
+function normalizeAllergens(val) {
+  if (Array.isArray(val)) return val.filter(Boolean).join(',') || null;
+  return (val || '').trim() || null;
+}
 
 function deleteFile(imageUrl) {
   if (!imageUrl) return;
@@ -364,7 +384,12 @@ function buildExportHTML(menu, categories, dishesByCategory) {
       const img   = src ? `<img src="${src}" alt="${esc(dish.name)}" class="dimg">` : '';
       const price = dish.price != null ? `<span class="price">${Number(dish.price).toFixed(2)} €</span>` : '';
       const desc  = dish.description ? `<p class="desc">${esc(dish.description)}</p>` : '';
-      const alg   = dish.allergens   ? `<p class="alg"><b>Alérgenos:</b> ${esc(dish.allergens)}</p>` : '';
+      const alg   = dish.allergens
+        ? `<div class="alg">${dish.allergens.split(',').map(s => s.trim()).filter(Boolean).map(algVal => {
+            const a = allergensList.find(x => x.id === algVal || x.label.toLowerCase() === algVal.toLowerCase());
+            return a ? `<span class="alg-badge">${a.icon} ${esc(a.label)}</span>`
+                     : `<span class="alg-badge alg-badge--g">${esc(algVal)}</span>`;
+          }).join('')}</div>` : '';
       return `<div class="dish">${img}<div class="di"><div class="dh"><span class="dn">${esc(dish.name)}</span>${price}</div>${desc}${alg}</div></div>`;
     }).join('');
 
@@ -407,8 +432,9 @@ main{max-width:680px;margin:0 auto;padding:16px 14px 48px}
 .dn{font-size:14px;font-weight:700}
 .price{font-size:14px;font-weight:800;color:#652d90;white-space:nowrap;flex-shrink:0}
 .desc{font-size:12px;color:#666;line-height:1.5;margin-bottom:3px}
-.alg{font-size:11px;color:#888}
-.alg b{color:#e65100}
+.alg{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px}
+.alg-badge{display:inline-flex;align-items:center;gap:2px;padding:2px 7px;border-radius:10px;background:#fff3e0;border:1px solid #ffcc80;color:#bf360c;font-size:10px;font-weight:600}
+.alg-badge--g{background:#fce4ec;border-color:#f48fb1;color:#ad1457}
 .empty{color:#bbb;font-size:12px;text-align:center;padding:6px}
 @media(max-width:440px){h1{font-size:1.5rem}.dimg{width:70px;height:70px}}
 </style>

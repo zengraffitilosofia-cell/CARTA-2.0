@@ -52,7 +52,17 @@
                       <p class="menu-dish-desc"><%= dish.description %></p>
                     <% } %>
                     <% if (dish.allergens) { %>
-                      <p class="menu-dish-alg"><strong>Alérgenos:</strong> <%= dish.allergens %></p>
+                      <div class="menu-dish-allergens">
+                        <% dish.allergens.split(',').map(s => s.trim()).filter(Boolean).forEach(algVal => {
+                             const alg = allergensList.find(a => a.id === algVal || a.label.toLowerCase() === algVal.toLowerCase());
+                        %>
+                          <% if (alg) { %>
+                            <span class="allergen-badge" title="<%= alg.label %>"><%= alg.icon %> <span><%= alg.label %></span></span>
+                          <% } else { %>
+                            <span class="allergen-badge allergen-badge--generic"><%= algVal %></span>
+                          <% } %>
+                        <% }); %>
+                      </div>
                     <% } %>
                   </div>
                 </div>
