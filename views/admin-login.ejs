@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Carta Interactiva · Admin</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <main class="login-page">
+
+    <div class="login-logo-header">
+      <span class="login-brand-text">CARTA</span>
+      <span class="login-brand-sub">Interactiva</span>
+    </div>
+
+    <div class="card card--login">
+      <h1 class="login-title">Panel de administración</h1>
+      <p class="login-subtitle">Acceso restringido</p>
+
+      <% if (error) { %>
+        <div class="alert alert--error"><%= error %></div>
+      <% } %>
+
+      <form method="POST" action="/admin/login" class="login-form">
+        <div>
+          <label for="pw">Contraseña</label>
+          <input type="password" id="pw" name="password" placeholder="••••••••" autofocus required>
+        </div>
+        <button type="submit" class="btn btn--primary" style="width:100%">Entrar</button>
+      </form>
+    </div>
+
+  </main>
+</body>
+</html>

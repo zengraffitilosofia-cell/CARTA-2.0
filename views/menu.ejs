@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= menu.name %><% if (menu.restaurant_name) { %> · <%= menu.restaurant_name %><% } %></title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body class="menu-pub-page">
+
+  <header class="menu-pub-header">
+    <% if (menu.logo_url) { %>
+      <img src="<%= menu.logo_url %>" alt="<%= menu.restaurant_name || menu.name %>" class="menu-pub-logo">
+    <% } %>
+    <% if (menu.restaurant_name) { %>
+      <p class="menu-pub-restaurant"><%= menu.restaurant_name %></p>
+    <% } %>
+    <h1 class="menu-pub-title"><%= menu.name %></h1>
+    <% if (menu.description) { %>
+      <p class="menu-pub-desc"><%= menu.description %></p>
+    <% } %>
+  </header>
+
+  <main class="menu-pub-body">
+    <% if (categories.length === 0) { %>
+      <p class="empty-state" style="text-align:center;padding:40px">Esta carta no tiene contenido todavía.</p>
+    <% } %>
+
+    <% categories.forEach(cat => {
+         const dishes = dishesByCategory[cat.id] || [];
+    %>
+      <details class="menu-cat" open>
+        <summary class="menu-cat-title"><%= cat.name %></summary>
+        <div class="menu-cat-body">
+          <% if (dishes.length === 0) { %>
+            <p class="empty-state" style="padding:12px">Sin platos en esta categoría.</p>
+          <% } else { %>
+            <div class="menu-dishes">
+              <% dishes.forEach(dish => { %>
+                <div class="menu-dish-card">
+                  <% if (dish.image_url) { %>
+                    <img src="<%= dish.image_url %>" alt="<%= dish.name %>" class="menu-dish-img">
+                  <% } %>
+                  <div class="menu-dish-info">
+                    <div class="menu-dish-header">
+                      <strong class="menu-dish-name"><%= dish.name %></strong>
+                      <% if (dish.price != null) { %>
+                        <span class="menu-dish-price"><%= Number(dish.price).toFixed(2) %> €</span>
+                      <% } %>
+                    </div>
+                    <% if (dish.description) { %>
+                      <p class="menu-dish-desc"><%= dish.description %></p>
+                    <% } %>
+                    <% if (dish.allergens) { %>
+                      <p class="menu-dish-alg"><strong>Alérgenos:</strong> <%= dish.allergens %></p>
+                    <% } %>
+                  </div>
+                </div>
+              <% }) %>
+            </div>
+          <% } %>
+        </div>
+      </details>
+    <% }) %>
+  </main>
+
+</body>
+</html>
