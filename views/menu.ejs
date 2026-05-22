@@ -5,6 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= menu.name %><% if (menu.restaurant_name) { %> · <%= menu.restaurant_name %><% } %></title>
   <link rel="stylesheet" href="/style.css">
+
+  <style>
+    .menu-cat-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s ease;
+    }
+
+    .menu-cat-body.open {
+      padding: 10px 0;
+    }
+
+    .menu-cat-header {
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body class="menu-pub-page">
 
@@ -29,8 +45,9 @@
     <% categories.forEach(cat => {
          const dishes = dishesByCategory[cat.id] || [];
     %>
-      <details class="menu-cat" open>
-        <summary class="menu-cat-title"><%= cat.name %></summary>
+      <div class="menu-cat">
+        <div class="menu-cat-header menu-cat-title"><%= cat.name %></div>
+
         <div class="menu-cat-body">
           <% if (dishes.length === 0) { %>
             <p class="empty-state" style="padding:12px">Sin platos en esta categoría.</p>
@@ -60,9 +77,34 @@
             </div>
           <% } %>
         </div>
-      </details>
+      </div>
     <% }) %>
   </main>
+
+  <script>
+    document.querySelectorAll('.menu-cat-header').forEach(header => {
+      header.addEventListener('click', () => {
+        const body = header.nextElementSibling;
+        const isOpen = body.classList.contains('open');
+
+        // cerrar todas
+        document.querySelectorAll('.menu-cat-body').forEach(b => {
+          b.classList.remove('open');
+          b.style.maxHeight = null;
+        });
+
+        if (!isOpen) {
+          body.classList.add('open');
+          body.style.maxHeight = body.scrollHeight + "px";
+
+          // scroll suave
+          setTimeout(() => {
+            header.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 200);
+        }
+      });
+    });
+  </script>
 
 </body>
 </html>
