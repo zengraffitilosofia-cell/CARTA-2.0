@@ -3,15 +3,30 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Carta Interactiva · Admin</title>
+  <title>NFC Menu · Admin</title>
   <link rel="stylesheet" href="/style.css">
+  <% if (typeof csrfToken !== 'undefined') { %>
+    <meta name="csrf-token" content="<%= csrfToken %>">
+  <% } %>
+  <style>
+    .header-product-logo {
+      height: 36px;
+      object-fit: contain;
+      flex-shrink: 0;
+    }
+  </style>
 </head>
 <body class="admin-body">
 
   <!-- ── Header ── -->
   <header class="admin-header">
     <a href="/admin" class="header-brand">
-      <span class="header-title">CARTA INTERACTIVA</span>
+      <!-- Logo NFC Menu en el header — coloca NFCMENU.png en tu carpeta public/ -->
+      <img
+        src="/NFCMENU.png"
+        alt="NFC Menu"
+        class="header-product-logo">
+      <span class="header-title">NFC Menu</span>
     </a>
     <nav class="admin-nav">
       <% if (page === 'menu') { %>
@@ -41,6 +56,9 @@
       <div class="panel">
         <h2 class="panel-title">Nueva carta</h2>
         <form method="POST" action="/admin/menus">
+          <% if (typeof csrfToken !== 'undefined') { %>
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <% } %>
           <div class="form-grid">
             <div class="form-group">
               <label for="mn">Nombre de la carta <span style="color:#cf2e2e">*</span></label>
@@ -93,6 +111,9 @@
                       <a href="/admin/menus/<%= menu.id %>/export" class="btn btn--sm">Exportar</a>
                       <form method="POST" action="/admin/menus/<%= menu.id %>/delete" style="display:inline"
                             onsubmit="return confirm('¿Eliminar «<%= menu.name %>» y todos sus datos?')">
+                        <% if (typeof csrfToken !== 'undefined') { %>
+                          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <% } %>
                         <button type="submit" class="btn btn--danger btn--sm">Eliminar</button>
                       </form>
                     </td>
@@ -118,6 +139,9 @@
           <a href="/admin/menus/<%= menu.id %>/export" class="btn btn--sm">⬇ Exportar HTML</a>
           <form method="POST" action="/admin/menus/<%= menu.id %>/delete" style="display:inline"
                 onsubmit="return confirm('¿Eliminar esta carta y todos sus contenidos?')">
+            <% if (typeof csrfToken !== 'undefined') { %>
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <% } %>
             <button type="submit" class="btn btn--danger btn--sm">Eliminar carta</button>
           </form>
         </div>
@@ -127,6 +151,9 @@
       <div class="panel">
         <h2 class="panel-title">Datos de la carta</h2>
         <form method="POST" action="/admin/menus/<%= menu.id %>/edit" enctype="multipart/form-data">
+          <% if (typeof csrfToken !== 'undefined') { %>
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <% } %>
           <div class="form-grid">
             <div class="form-group">
               <label>Nombre <span style="color:#cf2e2e">*</span></label>
@@ -193,6 +220,9 @@
                 <button class="btn btn--sm" onclick="toggleRename(<%= cat.id %>)">Renombrar</button>
                 <form method="POST" action="/admin/categories/<%= cat.id %>/delete" style="display:inline"
                       onsubmit="return confirm('¿Eliminar «<%= cat.name %>» y todos sus platos?')">
+                  <% if (typeof csrfToken !== 'undefined') { %>
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <% } %>
                   <button type="submit" class="btn btn--danger btn--sm">Eliminar</button>
                 </form>
               </div>
@@ -201,6 +231,9 @@
             <!-- Rename form (hidden) -->
             <div class="rename-form hidden" id="rename-<%= cat.id %>">
               <form method="POST" action="/admin/categories/<%= cat.id %>/edit" class="inline-form">
+                <% if (typeof csrfToken !== 'undefined') { %>
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <% } %>
                 <input type="text" name="name" value="<%= cat.name %>" required class="inline-input">
                 <button type="submit" class="btn btn--primary btn--sm">Guardar</button>
                 <button type="button" class="btn btn--sm" onclick="toggleRename(<%= cat.id %>)">Cancelar</button>
@@ -241,6 +274,9 @@
                           <button class="btn btn--sm" onclick="toggleEditDish(<%= dish.id %>)">Editar</button>
                           <form method="POST" action="/admin/dishes/<%= dish.id %>/delete" style="display:inline"
                                 onsubmit="return confirm('¿Eliminar «<%= dish.name %>»?')">
+                            <% if (typeof csrfToken !== 'undefined') { %>
+                              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                            <% } %>
                             <button type="submit" class="btn btn--danger btn--sm">Eliminar</button>
                           </form>
                         </div>
@@ -249,6 +285,9 @@
                       <!-- Edit dish form (hidden) -->
                       <div class="dish-edit-form hidden" id="edit-dish-<%= dish.id %>">
                         <form method="POST" action="/admin/dishes/<%= dish.id %>/edit" enctype="multipart/form-data">
+                          <% if (typeof csrfToken !== 'undefined') { %>
+                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                          <% } %>
                           <div class="form-grid dish-fg">
                             <div class="form-group">
                               <label>Nombre <span style="color:#cf2e2e">*</span></label>
@@ -308,6 +347,9 @@
                 <div class="add-dish-form hidden" id="add-dish-<%= cat.id %>">
                   <form method="POST" action="/admin/categories/<%= cat.id %>/dishes"
                         enctype="multipart/form-data">
+                    <% if (typeof csrfToken !== 'undefined') { %>
+                      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <% } %>
                     <div class="form-grid dish-fg">
                       <div class="form-group">
                         <label>Nombre <span style="color:#cf2e2e">*</span></label>
@@ -353,6 +395,9 @@
         <!-- Add category -->
         <div class="add-cat-wrap">
           <form method="POST" action="/admin/menus/<%= menu.id %>/categories">
+            <% if (typeof csrfToken !== 'undefined') { %>
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <% } %>
             <div class="form-group">
               <label>Nueva categoría</label>
               <div style="display:flex;gap:8px;align-items:flex-start">
