@@ -5,416 +5,52 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NFC Menu · Admin</title>
   <link rel="stylesheet" href="/style.css">
-  <% if (typeof csrfToken !== 'undefined') { %>
-    <meta name="csrf-token" content="<%= csrfToken %>">
-  <% } %>
   <style>
-    .header-product-logo {
-      height: 36px;
+    .login-logo-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+    .login-product-logo {
+      width: 90px;
       object-fit: contain;
-      flex-shrink: 0;
+      filter: drop-shadow(0 2px 8px rgba(101,45,144,0.18));
     }
   </style>
 </head>
-<body class="admin-body">
+<body>
+  <main class="login-page">
 
-  <!-- ── Header ── -->
-  <header class="admin-header">
-    <a href="/admin" class="header-brand">
-      <!-- Logo NFC Menu en el header — coloca NFCMENU.png en tu carpeta public/ -->
+    <div class="login-logo-header">
+      <!-- Logo NFC Menu — coloca NFCMENU.png en tu carpeta public/ -->
       <img
         src="/NFCMENU.png"
         alt="NFC Menu"
-        class="header-product-logo">
-      <span class="header-title">NFC Menu</span>
-    </a>
-    <nav class="admin-nav">
-      <% if (page === 'menu') { %>
-        <a href="/admin" class="nav-link">← Mis Cartas</a>
+        class="login-product-logo">
+    </div>
+
+    <div class="card card--login">
+      <h1 class="login-title">Panel de administración</h1>
+      <p class="login-subtitle">Acceso restringido</p>
+
+      <% if (error) { %>
+        <div class="alert alert--error"><%= error %></div>
       <% } %>
-      <a href="/admin/logout" class="nav-link nav-link--logout">Cerrar sesión</a>
-    </nav>
-  </header>
 
-  <div class="admin-content">
-
-    <!-- Flash message -->
-    <% if (flash) { %>
-      <div class="toast toast--<%= flash.type %>" id="js-toast"><%= flash.msg %></div>
-    <% } %>
-
-    <!-- ════════════════════════════════════════════════
-         DASHBOARD
-    ═════════════════════════════════════════════════ -->
-    <% if (page === 'dashboard') { %>
-
-      <div class="page-header">
-        <h1 class="page-title">Mis Cartas</h1>
-      </div>
-
-      <!-- Create menu -->
-      <div class="panel">
-        <h2 class="panel-title">Nueva carta</h2>
-        <form method="POST" action="/admin/menus">
-          <% if (typeof csrfToken !== 'undefined') { %>
-            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-          <% } %>
-          <div class="form-grid">
-            <div class="form-group">
-              <label for="mn">Nombre de la carta <span style="color:#cf2e2e">*</span></label>
-              <input type="text" id="mn" name="name" placeholder="Ej: Carta Primavera 2025" required>
-            </div>
-            <div class="form-group">
-              <label for="mrn">Restaurante <span class="label-opt">(opcional)</span></label>
-              <input type="text" id="mrn" name="restaurant_name" placeholder="Ej: La Toscana">
-            </div>
-            <div class="form-group form-group--full">
-              <label for="md">Descripción <span class="label-opt">(opcional)</span></label>
-              <input type="text" id="md" name="description" placeholder="Ej: Disponible hasta agosto">
-            </div>
-          </div>
-          <div style="margin-top:16px">
-            <button type="submit" class="btn btn--primary">Crear carta</button>
-          </div>
-        </form>
-      </div>
-
-      <!-- Menu list -->
-      <div class="panel">
-        <h2 class="panel-title">Cartas existentes</h2>
-        <% if (menus.length === 0) { %>
-          <p class="empty-state">No hay cartas todavía. Crea tu primera carta arriba.</p>
-        <% } else { %>
-          <div class="table-wrap">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Nombre</th>
-                  <th>Restaurante</th>
-                  <th>Categorías</th>
-                  <th>Platos</th>
-                  <th>Fecha</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                <% menus.forEach(menu => { %>
-                  <tr>
-                    <td><strong><%= menu.name %></strong></td>
-                    <td><%= menu.restaurant_name || '—' %></td>
-                    <td><%= menu.category_count %></td>
-                    <td><%= menu.dish_count %></td>
-                    <td class="td-date"><%= new Date(menu.created_at).toLocaleDateString('es-ES') %></td>
-                    <td class="td-actions">
-                      <a href="/admin/menus/<%= menu.id %>" class="btn btn--primary btn--sm">Editar</a>
-                      <a href="/menu/<%= menu.id %>" target="_blank" class="btn btn--secondary btn--sm">Ver</a>
-                      <a href="/admin/menus/<%= menu.id %>/export" class="btn btn--sm">Exportar</a>
-                      <form method="POST" action="/admin/menus/<%= menu.id %>/delete" style="display:inline"
-                            onsubmit="return confirm('¿Eliminar «<%= menu.name %>» y todos sus datos?')">
-                        <% if (typeof csrfToken !== 'undefined') { %>
-                          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                        <% } %>
-                        <button type="submit" class="btn btn--danger btn--sm">Eliminar</button>
-                      </form>
-                    </td>
-                  </tr>
-                <% }) %>
-              </tbody>
-            </table>
-          </div>
+      <form method="POST" action="/admin/login" class="login-form">
+        <% if (typeof csrfToken !== 'undefined') { %>
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
         <% } %>
-      </div>
-
-    <% } %>
-
-    <!-- ════════════════════════════════════════════════
-         MENU EDITOR
-    ═════════════════════════════════════════════════ -->
-    <% if (page === 'menu') { %>
-
-      <div class="page-header">
-        <h1 class="page-title"><%= menu.name %></h1>
-        <div class="page-header-actions">
-          <a href="/menu/<%= menu.id %>" target="_blank" class="btn btn--secondary btn--sm">Ver carta</a>
-          <a href="/admin/menus/<%= menu.id %>/export" class="btn btn--sm">⬇ Exportar HTML</a>
-          <form method="POST" action="/admin/menus/<%= menu.id %>/delete" style="display:inline"
-                onsubmit="return confirm('¿Eliminar esta carta y todos sus contenidos?')">
-            <% if (typeof csrfToken !== 'undefined') { %>
-              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-            <% } %>
-            <button type="submit" class="btn btn--danger btn--sm">Eliminar carta</button>
-          </form>
+        <div>
+          <label for="pw">Contraseña</label>
+          <input type="password" id="pw" name="password" placeholder="••••••••" autofocus required>
         </div>
-      </div>
+        <button type="submit" class="btn btn--primary" style="width:100%">Entrar</button>
+      </form>
+    </div>
 
-      <!-- Edit menu details -->
-      <div class="panel">
-        <h2 class="panel-title">Datos de la carta</h2>
-        <form method="POST" action="/admin/menus/<%= menu.id %>/edit" enctype="multipart/form-data">
-          <% if (typeof csrfToken !== 'undefined') { %>
-            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-          <% } %>
-          <div class="form-grid">
-            <div class="form-group">
-              <label>Nombre <span style="color:#cf2e2e">*</span></label>
-              <input type="text" name="name" value="<%= menu.name %>" required>
-            </div>
-            <div class="form-group">
-              <label>Restaurante</label>
-              <input type="text" name="restaurant_name" value="<%= menu.restaurant_name || '' %>">
-            </div>
-            <div class="form-group form-group--full">
-              <label>Descripción</label>
-              <input type="text" name="description" value="<%= menu.description || '' %>">
-            </div>
-            <div class="form-group form-group--full">
-              <label>Logo del restaurante</label>
-              <% if (menu.logo_url) { %>
-                <div class="logo-preview-wrap">
-                  <img src="<%= menu.logo_url %>" alt="Logo actual" class="logo-preview">
-                  <small>Logo actual. Sube uno nuevo para reemplazarlo.</small>
-                  <label style="display:inline-flex;align-items:center;gap:6px;margin-top:4px;cursor:pointer;font-size:12px;color:#cf2e2e;font-weight:600">
-                    <input type="checkbox" name="clear_logo" value="1" style="width:auto;min-height:auto">
-                    Eliminar logo actual
-                  </label>
-                </div>
-              <% } %>
-              <input type="file" name="logo" accept="image/jpeg,image/png,image/gif,image/webp" style="padding:6px 0">
-              <small>Sube desde tu PC (JPG, PNG, GIF, WEBP — máx. 5 MB)</small>
-            </div>
-          </div>
-          <div style="margin-top:16px">
-            <button type="submit" class="btn btn--primary">Guardar cambios</button>
-          </div>
-        </form>
-      </div>
-
-      <!-- Categories and dishes -->
-      <div class="panel">
-        <div class="panel-header">
-          <h2 class="panel-title">Categorías y platos</h2>
-        </div>
-
-        <% if (categories.length === 0) { %>
-          <p class="empty-state" style="margin-bottom:20px">
-            Sin categorías todavía. Añade la primera abajo.
-          </p>
-        <% } %>
-
-        <!-- Category blocks -->
-        <% categories.forEach(cat => {
-             const catDishes = dishesByCategory[cat.id] || [];
-        %>
-          <div class="cat-block" id="cat-block-<%= cat.id %>">
-
-            <!-- Category header row -->
-            <div class="cat-header">
-              <button class="cat-toggle" onclick="toggleCat(<%= cat.id %>)" id="cat-toggle-<%= cat.id %>">
-                <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <polyline points="6 9 12 15 18 9"></polyline>
-                </svg>
-                <span class="cat-label"><%= cat.name %></span>
-                <span class="cat-count">(<%= catDishes.length %> plato<%= catDishes.length !== 1 ? 's' : '' %>)</span>
-              </button>
-              <div class="cat-btns">
-                <button class="btn btn--sm" onclick="toggleRename(<%= cat.id %>)">Renombrar</button>
-                <form method="POST" action="/admin/categories/<%= cat.id %>/delete" style="display:inline"
-                      onsubmit="return confirm('¿Eliminar «<%= cat.name %>» y todos sus platos?')">
-                  <% if (typeof csrfToken !== 'undefined') { %>
-                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                  <% } %>
-                  <button type="submit" class="btn btn--danger btn--sm">Eliminar</button>
-                </form>
-              </div>
-            </div>
-
-            <!-- Rename form (hidden) -->
-            <div class="rename-form hidden" id="rename-<%= cat.id %>">
-              <form method="POST" action="/admin/categories/<%= cat.id %>/edit" class="inline-form">
-                <% if (typeof csrfToken !== 'undefined') { %>
-                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                <% } %>
-                <input type="text" name="name" value="<%= cat.name %>" required class="inline-input">
-                <button type="submit" class="btn btn--primary btn--sm">Guardar</button>
-                <button type="button" class="btn btn--sm" onclick="toggleRename(<%= cat.id %>)">Cancelar</button>
-              </form>
-            </div>
-
-            <!-- Category body -->
-            <div class="cat-body" id="cat-body-<%= cat.id %>">
-
-              <!-- Dishes list -->
-              <% if (catDishes.length > 0) { %>
-                <div class="dishes-list">
-                  <% catDishes.forEach(dish => { %>
-                    <div class="dish-row">
-
-                      <!-- Dish info -->
-                      <div class="dish-info-row">
-                        <% if (dish.image_url) { %>
-                          <img src="<%= dish.image_url %>" alt="<%= dish.name %>" class="dish-thumb">
-                        <% } else { %>
-                          <div class="dish-thumb dish-thumb--empty"></div>
-                        <% } %>
-                        <div class="dish-meta">
-                          <div class="dish-meta-top">
-                            <strong><%= dish.name %></strong>
-                            <% if (dish.price != null) { %>
-                              <span class="dish-price"><%= Number(dish.price).toFixed(2) %> €</span>
-                            <% } %>
-                          </div>
-                          <% if (dish.description) { %>
-                            <p class="dish-desc"><%= dish.description %></p>
-                          <% } %>
-                          <% if (dish.allergens) { %>
-                            <p class="dish-alg"><strong>Alérgenos:</strong> <%= dish.allergens %></p>
-                          <% } %>
-                        </div>
-                        <div class="dish-row-btns">
-                          <button class="btn btn--sm" onclick="toggleEditDish(<%= dish.id %>)">Editar</button>
-                          <form method="POST" action="/admin/dishes/<%= dish.id %>/delete" style="display:inline"
-                                onsubmit="return confirm('¿Eliminar «<%= dish.name %>»?')">
-                            <% if (typeof csrfToken !== 'undefined') { %>
-                              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                            <% } %>
-                            <button type="submit" class="btn btn--danger btn--sm">Eliminar</button>
-                          </form>
-                        </div>
-                      </div>
-
-                      <!-- Edit dish form (hidden) -->
-                      <div class="dish-edit-form hidden" id="edit-dish-<%= dish.id %>">
-                        <form method="POST" action="/admin/dishes/<%= dish.id %>/edit" enctype="multipart/form-data">
-                          <% if (typeof csrfToken !== 'undefined') { %>
-                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                          <% } %>
-                          <div class="form-grid dish-fg">
-                            <div class="form-group">
-                              <label>Nombre <span style="color:#cf2e2e">*</span></label>
-                              <input type="text" name="name" value="<%= dish.name %>" required>
-                            </div>
-                            <div class="form-group">
-                              <label>Precio (€)</label>
-                              <input type="number" name="price" step="0.01" min="0"
-                                     value="<%= dish.price != null ? dish.price : '' %>">
-                            </div>
-                            <div class="form-group form-group--full">
-                              <label>Descripción</label>
-                              <input type="text" name="description" value="<%= dish.description || '' %>">
-                            </div>
-                            <div class="form-group form-group--full">
-                              <label>Alérgenos</label>
-                              <div class="allergen-grid">
-                                <% const selAlg = (dish.allergens || '').split(',').map(s => s.trim()).filter(Boolean); %>
-                                <% allergensList.forEach(a => {
-                                     const checked = selAlg.some(s => s === a.id || s.toLowerCase() === a.label.toLowerCase());
-                                %>
-                                  <label class="allergen-check">
-                                    <input type="checkbox" name="allergens" value="<%= a.id %>" <%= checked ? 'checked' : '' %>>
-                                    <span class="allergen-chip"><%= a.icon %> <%= a.label %></span>
-                                  </label>
-                                <% }); %>
-                              </div>
-                            </div>
-                            <div class="form-group form-group--full">
-                              <label>Imagen <span class="label-opt">(nueva foto)</span></label>
-                              <input type="file" name="image" accept="image/*">
-                              <% if (dish.image_url) { %>
-                                <small>Ya tiene imagen. Sube una nueva para reemplazarla.</small>
-                              <% } %>
-                            </div>
-                          </div>
-                          <div class="form-row-btns">
-                            <button type="submit" class="btn btn--primary btn--sm">Guardar</button>
-                            <button type="button" class="btn btn--sm"
-                                    onclick="toggleEditDish(<%= dish.id %>)">Cancelar</button>
-                          </div>
-                        </form>
-                      </div>
-
-                    </div><!-- /dish-row -->
-                  <% }) %>
-                </div>
-              <% } else { %>
-                <p class="empty-state" style="padding:12px 0">Sin platos en esta categoría.</p>
-              <% } %>
-
-              <!-- Add dish -->
-              <div class="add-dish-wrap">
-                <button class="btn btn--secondary btn--sm" onclick="toggleAddDish(<%= cat.id %>)">
-                  + Añadir plato
-                </button>
-                <div class="add-dish-form hidden" id="add-dish-<%= cat.id %>">
-                  <form method="POST" action="/admin/categories/<%= cat.id %>/dishes"
-                        enctype="multipart/form-data">
-                    <% if (typeof csrfToken !== 'undefined') { %>
-                      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                    <% } %>
-                    <div class="form-grid dish-fg">
-                      <div class="form-group">
-                        <label>Nombre <span style="color:#cf2e2e">*</span></label>
-                        <input type="text" name="name" required placeholder="Nombre del plato">
-                      </div>
-                      <div class="form-group">
-                        <label>Precio (€)</label>
-                        <input type="number" name="price" step="0.01" min="0" placeholder="12.50">
-                      </div>
-                      <div class="form-group form-group--full">
-                        <label>Descripción</label>
-                        <input type="text" name="description" placeholder="Ingredientes o descripción breve">
-                      </div>
-                      <div class="form-group form-group--full">
-                        <label>Alérgenos</label>
-                        <div class="allergen-grid">
-                          <% allergensList.forEach(a => { %>
-                            <label class="allergen-check">
-                              <input type="checkbox" name="allergens" value="<%= a.id %>">
-                              <span class="allergen-chip"><%= a.icon %> <%= a.label %></span>
-                            </label>
-                          <% }) %>
-                        </div>
-                      </div>
-                      <div class="form-group form-group--full">
-                        <label>Imagen</label>
-                        <input type="file" name="image" accept="image/*">
-                      </div>
-                    </div>
-                    <div class="form-row-btns">
-                      <button type="submit" class="btn btn--primary btn--sm">Añadir plato</button>
-                      <button type="button" class="btn btn--sm"
-                              onclick="toggleAddDish(<%= cat.id %>)">Cancelar</button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-
-            </div><!-- /cat-body -->
-          </div><!-- /cat-block -->
-        <% }) %>
-
-        <!-- Add category -->
-        <div class="add-cat-wrap">
-          <form method="POST" action="/admin/menus/<%= menu.id %>/categories">
-            <% if (typeof csrfToken !== 'undefined') { %>
-              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-            <% } %>
-            <div class="form-group">
-              <label>Nueva categoría</label>
-              <div style="display:flex;gap:8px;align-items:flex-start">
-                <input type="text" name="name" required placeholder="Ej: Entrantes"
-                       style="flex:1;min-height:44px">
-                <button type="submit" class="btn btn--primary">Añadir categoría</button>
-              </div>
-            </div>
-          </form>
-        </div>
-
-      </div><!-- /panel -->
-
-    <% } %>
-
-  </div><!-- /admin-content -->
-
-  <script src="/admin.js"></script>
+  </main>
 </body>
 </html>
